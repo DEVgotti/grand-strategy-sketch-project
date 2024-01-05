@@ -1,3 +1,21 @@
 body {
-  background: black
+  background: black;
+  color: white;
+  padding: 0;
+  margin: 0;
+}
+
+#app {
+  display: flex;
+  background-color: gray;
+  width: 90vw;
+  height: 98vh;
+  margin: auto;
+  padding: 0.5vw;
+}
+
+.cell {
+  background-color: white;
+  width: 10%;
+  height: 15%;
 }
