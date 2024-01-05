@@ -58,8 +58,8 @@ const strategy = () => {
   const onClickShowName = (event) => {
     const county = event.target
     const countyTitle = county.title
-
-    alert(countyTitle)
+    document.getElementById('properties').style.visibility = 'visible'
+    document.getElementsByClassName('county_name')[0].innerHTML = countyTitle
   }
 
   const generateMap = (rows, cols) => {
