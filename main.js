@@ -71,7 +71,7 @@ const strategy = () => {
       const county = chooseAndRemoveCounty(counties)
       container.setAttribute('data-county', county)
       container.setAttribute('title', county)
-      container.addEventListener('click', onClickActions)
+      container.addEventListener('click', onClickShowName)
     }
   }
 
