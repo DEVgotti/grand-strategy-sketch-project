@@ -1,7 +1,7 @@
 import { chooseAndRemoveCounty } from './helpers/chooseAndRemove.js'
 
 const strategy = () => {
-  const app = document.getElementById("app")
+  const map = document.getElementById("map")
   const counties = ["Albacete",
   "Alicante",
   "Almería",
@@ -66,8 +66,8 @@ const strategy = () => {
     // 5 rows 5 cols
     for (let i = 0; i < rows*cols; i++) {
       console.log('Here')
-      const container = app.appendChild(document.createElement('div'))
-      container.classList.add('cell')
+      const container = map.appendChild(document.createElement('div'))
+      container.classList.add('county')
       const county = chooseAndRemoveCounty(counties)
       container.setAttribute('data-county', county)
       container.setAttribute('title', county)
