@@ -55,6 +55,13 @@ const strategy = () => {
   "Ceuta",
   "Melilla"]
 
+  const onClickShowName = (event) => {
+    const county = event.target
+    const countyTitle = county.title
+
+    alert(countyTitle)
+  }
+
   const generateMap = (rows, cols) => {
     // 5 rows 5 cols
     for (let i = 0; i < rows*cols; i++) {
@@ -63,6 +70,8 @@ const strategy = () => {
       container.classList.add('cell')
       const county = chooseAndRemoveCounty(counties)
       container.setAttribute('data-county', county)
+      container.setAttribute('title', county)
+      container.addEventListener('click', onClickActions)
     }
   }
 
