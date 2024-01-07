@@ -33,6 +33,8 @@ body {
   height: 100%;
 }
 .county .troop {
+  display: inline-block;
+  margin-left: 2px;
   width: 10%;
   height: 10%;
 

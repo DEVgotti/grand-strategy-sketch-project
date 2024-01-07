@@ -59,13 +59,6 @@ const strategy = () => {
   let selectedCounty = null
   let countyName
 
-  const onClickShowName = (event) => {
-    const county = event.target
-    const countyTitle = county.title
-    document.getElementById('properties').style.visibility = 'visible'
-    document.getElementsByClassName('county_name')[0].innerHTML = countyTitle
-  }
-
   // ! Muchas cosas mezcladas en una función dedicada a generar el mapa.
   // TODO: Separar el resto de funcionalidades en algún momento.
   const generateMap = (rows, cols) => {
@@ -75,17 +68,29 @@ const strategy = () => {
       container.classList.add('county')
       const county = chooseAndRemoveCounty(counties)
       container.setAttribute('title', county)
-      container.addEventListener('click', onClickShowName)
+    }
+  }
+  const isCounty = (county) => county.tagName === 'DIV' && event.target.classList.contains('county')
+
+  const handleActions = (event) => {
+    if(isCounty(event.target)) {
+      const county = event.target
+      onClickShowName(county)
 
       document.addEventListener('click', selectCounty)
       document.addEventListener('click', spawnTroops)
-      container.addEventListener('click', selectTroop)
+      county.addEventListener('click', selectTroop)
     }
   }
 
-  const isCounty = (event) => {
-    return event.target.tagName === 'DIV' && event.target.classList.contains('county')
+  const onClickShowName = (county) => {
+    if(isCounty(county)) {
+      const countyTitle = county.title
+      document.getElementById('properties').style.visibility = 'visible'
+      document.getElementsByClassName('county_name')[0].innerHTML = countyTitle
+    }
   }
+
   const selectCounty = (event) => {
     if(isCounty(event)) {
       selectedCounty = event.target
@@ -136,6 +141,7 @@ const strategy = () => {
     const troopClone = county.appendChild(troop.cloneNode(true))
     // Ocultamos la tropa clonada momentaneamente
     troopClone.style.visibility = 'hidden'
+
     const targetRect = county.getBoundingClientRect()
     const troopRect = troop.getBoundingClientRect()
 
@@ -145,8 +151,8 @@ const strategy = () => {
     troop.style.transition = 'transform 5s ease-in-out'
     troop.style.transform = `translate(${offsetX}px, ${offsetY}px)`
 
-    // Hacemos visible la copa clonada en el nuevo condado
-    // una vez termine la transición que simula el movimiento.
+    //* Hacemos visible la tropa clonada en el nuevo condado
+    //* una vez termine la transición que simula el movimiento.
     setTimeout(() => {
       // Hacemos la tropa clonada visible
       troopClone.style.visibility = 'visible'
@@ -154,6 +160,8 @@ const strategy = () => {
       troop.remove()
     }, 5000);
   }
+
+  document.addEventListener('click', handleActions)
 
   return {
     generateMap,
