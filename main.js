@@ -67,9 +67,15 @@ const strategy = () => {
     // 5 rows 5 cols
     for (let i = 0; i < rows * cols; i++) {
       const container = map.appendChild(document.createElement('div'))
-      container.classList.add('county')
+      container.classList.add('county_content')
+      const county_terrain = container.appendChild(document.createElement('div'))
+      county_terrain.classList.add('county')
       const county = chooseAndRemoveCounty(counties)
-      container.setAttribute('title', county)
+      county_terrain.setAttribute('title', county)
+      const county_name = container.appendChild(document.createElement('div'))
+      county_name.classList.add('county_name')
+
+      county_name.innerHTML = county
     }
   }
   const isCounty = (county) => county.tagName === 'DIV' && county.classList.contains('county')
@@ -92,7 +98,7 @@ const strategy = () => {
     if (isCounty(county)) {
       const countyTitle = county.title
       document.getElementById('properties').style.visibility = 'visible'
-      document.getElementsByClassName('county_name')[0].innerHTML = countyTitle
+      document.getElementById('properties').getElementsByClassName('county_name')[0].innerHTML = countyTitle
     }
   }
 

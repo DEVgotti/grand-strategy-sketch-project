@@ -7,8 +7,8 @@ body {
 
 .app {
   display: grid;
-  background-color: #2D3250;
-  grid-template-columns: repeat(2, 40vw);
+  background-color: #2d3250;
+  grid-template-columns: repeat(2, 43.5vw);
   grid-template-rows: repeat(1, 50%);
 }
 
@@ -19,28 +19,42 @@ body {
   height: 98vh;
   margin: auto;
   padding: 0.5vw;
-  grid-template-columns: repeat(5, 7.5vw);
-  grid-template-rows: repeat(5, 15vh);
-  grid-gap: 0.5em;
+  grid-template-columns: repeat(5, 8vw);
+  grid-template-rows: repeat(5, 16vh);
+  grid-gap: 1em;
 }
 
 .county {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #7077A1;
+  background-color: #7077a1;
   width: 100%;
-  height: 100%;
+  height: 90%;
+}
+.county_content .county_name {
+  position: relative;
+  bottom: 0;
+  background-color: #0000005c;
+  width: 100%;
+  height: 1.5em;
+  font-family: Verdana;
+  font-size: 0.6em;
+  text-align: center;
+  text-transform: uppercase;
 }
 .county .troop {
   display: inline-block;
   margin-left: 2px;
   width: 10%;
   height: 10%;
-
 }
-.county .troop.infantry { background-color: #89c173 }
-.county .troop.tank { background-color: #e5c083 }
+.county .troop.infantry {
+  background-color: #89c173;
+}
+.county .troop.tank {
+  background-color: #e5c083;
+}
 
 #properties {
   visibility: hidden;
@@ -50,5 +64,10 @@ body {
 }
 
 #properties .county_name {
+  padding: 10px;
+  margin: 0;
+}
+
+#properties .troop_movilization {
   padding: 5px;
 }
