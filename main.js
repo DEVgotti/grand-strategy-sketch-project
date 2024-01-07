@@ -70,16 +70,17 @@ const strategy = () => {
       container.setAttribute('title', county)
     }
   }
-  const isCounty = (county) => county.tagName === 'DIV' && event.target.classList.contains('county')
+  const isCounty = (county) => county.tagName === 'DIV' && county.classList.contains('county')
+  const isTroop = (troop) => troop.tagName === 'DIV' && troop.classList.contains('troop')
 
   const handleActions = (event) => {
-    if(isCounty(event.target)) {
-      const county = event.target
+    const county = event.target
+    if(isCounty(county)) {
+      selectCounty(county)
       onClickShowName(county)
 
-      document.addEventListener('click', selectCounty)
       document.addEventListener('click', spawnTroops)
-      county.addEventListener('click', selectTroop)
+      document.addEventListener('click', selectTroop)
     }
   }
 
@@ -91,14 +92,15 @@ const strategy = () => {
     }
   }
 
-  const selectCounty = (event) => {
-    if(isCounty(event)) {
-      selectedCounty = event.target
+  const selectCounty = (county) => {
+    if(isCounty(county)) {
+      selectedCounty = county
       console.log(`${selectedCounty.getAttribute('title')} selected`)
     }
 
     return selectedCounty
   }
+
   const spawnTroops = (event) => {
     if(event.target.tagName !== 'BUTTON') return
 
@@ -118,8 +120,8 @@ const strategy = () => {
   const selectTroop = (event) => {
     const element = event.target
 
-    if(element.classList.contains('troop')) {
-      if(selectedTroop) {
+    if(isTroop(element)) {
+      if(selectedTroop && isCounty(element)) {
         moveTroop(selectedTroop, element)
         selectedTroop = null
       } else {
@@ -127,12 +129,12 @@ const strategy = () => {
         selectedTroop = element
       }
     } else {
-      if(selectedTroop) {
+      if(selectedTroop && isCounty(element)) {
         moveTroop(selectedTroop, element)
         selectedTroop = null
       }
 
-      console.log('There\'s no troops here.')
+      if(isCounty(event.target)) console.log('There\'s no troops here.')
     }
   }
 
