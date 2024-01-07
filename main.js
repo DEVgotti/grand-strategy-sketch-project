@@ -73,6 +73,8 @@ const strategy = () => {
   const isCounty = (county) => county.tagName === 'DIV' && county.classList.contains('county')
   const isTroop = (troop) => troop.tagName === 'DIV' && troop.classList.contains('troop')
 
+  const hasEnemies = (county) => county.querySelectorAll('.troop').length > 1
+
   const handleActions = (event) => {
     const county = event.target
     if(isCounty(county)) {
