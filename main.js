@@ -87,7 +87,7 @@ const strategy = () => {
     return event.target.tagName === 'DIV' && event.target.classList.contains('county')
   }
   const selectCounty = (event) => {
-    if(event.target.tagName === 'DIV' && event.target.classList.contains('county')) {
+    if(isCounty(event)) {
       selectedCounty = event.target
       console.log(`${selectedCounty.getAttribute('title')} selected`)
     }
