@@ -66,6 +66,8 @@ const strategy = () => {
     document.getElementsByClassName('county_name')[0].innerHTML = countyTitle
   }
 
+  // ! Muchas cosas mezcladas en una función dedicada a generar el mapa.
+  // TODO: Separar el resto de funcionalidades en algún momento.
   const generateMap = (rows, cols) => {
     // 5 rows 5 cols
     for (let i = 0; i < rows*cols; i++) {
@@ -94,9 +96,8 @@ const strategy = () => {
   }
   const spawnTroops = (event) => {
     if(event.target.tagName !== 'BUTTON') return
-    console.log(selectedCounty)
-    countyName = selectedCounty.getAttribute('title')
 
+    countyName = selectedCounty.getAttribute('title')
     console.log(`${countyName} selected`)
 
     const stack = selectedCounty.appendChild(document.createElement('div'))
