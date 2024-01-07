@@ -1,4 +1,5 @@
 import { chooseAndRemoveCounty } from './helpers/chooseAndRemove.js'
+import { generateRandomId } from './helpers/generateId.js'
 
 const strategy = () => {
   const map = document.getElementById('map')
@@ -59,7 +60,15 @@ const strategy = () => {
 
   let selectedTroop = null
   let selectedCounty = null
-  let countyName
+  let countyName = ''
+  let army = {
+    infantry: {
+      quantity: 0,
+    },
+    tank: {
+      quantity: 0,
+    },
+  }
 
   // ! Muchas cosas mezcladas en una función dedicada a generar el mapa.
   // TODO: Separar el resto de funcionalidades en algún momento.
@@ -81,7 +90,9 @@ const strategy = () => {
   const isCounty = (county) => county.tagName === 'DIV' && county.classList.contains('county')
   const isTroop = (troop) => troop.tagName === 'DIV' && troop.classList.contains('troop')
 
+  // ? Ahora mismo no hay diferencia entre aliados o enemigos
   const hasEnemies = (county) => county.querySelectorAll('.troop').length > 1
+  const hasTroops = (county) => county.querySelectorAll('.troop').length > 1
 
   const handleActions = (event) => {
     const county = event.target
@@ -114,20 +125,39 @@ const strategy = () => {
   const spawnTroops = (event) => {
     if (event.target.tagName !== 'BUTTON') return
 
+    const spawnType = event.target
     countyName = selectedCounty.getAttribute('title')
     console.log(`${countyName} selected`)
 
-    const stack = selectedCounty.appendChild(document.createElement('div'))
-    stack.classList.add('troop')
-
-    if (event.target.classList.contains('infantry')) {
-      stack.classList.add('infantry')
-    } else {
-      stack.classList.add('tank')
+    if (!hasTroops(selectedCounty)) {
+      const stack = selectedCounty.appendChild(document.createElement('div'))
+      stack.classList.add('troop')
+      const troopId = generateRandomId()
+      stack.setAttribute('data-id', troopId)
     }
+
+    if (spawnType.classList.contains('infantry')) {
+      selectedCounty.getElementsByClassName('troop')[0].classList.add('infantry')
+      army = {
+        ...army,
+        infantry: {
+          quantity: army.infantry.quantity + 1,
+        },
+      }
+    } else {
+      selectedCounty.getElementsByClassName('troop')[0].classList.add('tank')
+      army = {
+        ...army,
+        tank: {
+          quantity: army.tank.quantity + 1,
+        },
+      }
+    }
+    console.log(army)
 
     if (hasEnemies(selectedCounty)) {
       console.log('Enemy')
+      fight(getEnemies(selectedCounty))
     }
   }
 
@@ -146,7 +176,12 @@ const strategy = () => {
     } else {
       if (selectedTroop && isCounty(element)) {
         console.log(`Moving to ${element.title}`)
-        await moveTroop(selectedTroop, element)
+        await moveTroop(selectedTroop, element).then(() => {
+          if (hasEnemies(selectedCounty)) {
+            console.log('Enemy')
+            fight(getEnemies(selectedCounty))
+          }
+        })
         selectedTroop = null
       }
     }
@@ -172,12 +207,18 @@ const strategy = () => {
         troop.remove()
         troop.removeEventListener('transitionend', handler)
 
-        if (hasEnemies(selectedCounty)) {
-          console.log('Enemy')
-        }
         resolve() // Resolvemos la promesa después de que la transición haya terminado
       })
     })
+  }
+
+  const mergeTroops = () => {}
+
+  const getEnemies = (county) => county.querySelectorAll('.troop')
+
+  const fight = (enemies) => {
+    console.log('Starting a fight...')
+    console.log(enemies)
   }
 
   document.addEventListener('click', handleActions)
