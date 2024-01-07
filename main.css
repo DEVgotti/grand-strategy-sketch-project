@@ -25,10 +25,21 @@ body {
 }
 
 .county {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   background-color: #7077A1;
   width: 100%;
   height: 100%;
 }
+.county .troop {
+  background-color: #000;
+  width: 10%;
+  height: 10%;
+
+}
+.county .troop.infantry { background-color: #89c173 }
+.county .troop.tank { background-color: #e5c083 }
 
 #properties {
   visibility: hidden;
