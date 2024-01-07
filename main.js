@@ -1,59 +1,61 @@
 import { chooseAndRemoveCounty } from './helpers/chooseAndRemove.js'
 
 const strategy = () => {
-  const map = document.getElementById("map")
-  const counties = ["Albacete",
-  "Alicante",
-  "Almería",
-  "Araba",
-  "Asturias",
-  "Ávila",
-  "Badajoz",
-  "Illes Balears",
-  "Barcelona",
-  "Bizkaia",
-  "Burgos",
-  "Cáceres",
-  "Cádiz",
-  "Cantabria",
-  "Castellón",
-  "Ciudad Real",
-  "Córdoba",
-  "A Coruña",
-  "Cuenca",
-  "Gipuzkoa",
-  "Girona",
-  "Granada",
-  "Guadalajara",
-  "Huelva",
-  "Huesca",
-  "Jaén",
-  "León",
-  "Lleida",
-  "Lugo",
-  "Madrid",
-  "Málaga",
-  "Murcia",
-  "Navarra",
-  "Ourense",
-  "Palencia",
-  "Las Palmas",
-  "Pontevedra",
-  "La Rioja",
-  "Salamanca",
-  "Santa Cruz de Tenerife",
-  "Segovia",
-  "Sevilla",
-  "Soria",
-  "Tarragona",
-  "Teruel",
-  "Toledo",
-  "Valencia",
-  "Valladolid",
-  "Zamora",
-  "Zaragoza",
-  "Ceuta",
-  "Melilla"]
+  const map = document.getElementById('map')
+  const counties = [
+    'Albacete',
+    'Alicante',
+    'Almería',
+    'Araba',
+    'Asturias',
+    'Ávila',
+    'Badajoz',
+    'Illes Balears',
+    'Barcelona',
+    'Bizkaia',
+    'Burgos',
+    'Cáceres',
+    'Cádiz',
+    'Cantabria',
+    'Castellón',
+    'Ciudad Real',
+    'Córdoba',
+    'A Coruña',
+    'Cuenca',
+    'Gipuzkoa',
+    'Girona',
+    'Granada',
+    'Guadalajara',
+    'Huelva',
+    'Huesca',
+    'Jaén',
+    'León',
+    'Lleida',
+    'Lugo',
+    'Madrid',
+    'Málaga',
+    'Murcia',
+    'Navarra',
+    'Ourense',
+    'Palencia',
+    'Las Palmas',
+    'Pontevedra',
+    'La Rioja',
+    'Salamanca',
+    'Santa Cruz de Tenerife',
+    'Segovia',
+    'Sevilla',
+    'Soria',
+    'Tarragona',
+    'Teruel',
+    'Toledo',
+    'Valencia',
+    'Valladolid',
+    'Zamora',
+    'Zaragoza',
+    'Ceuta',
+    'Melilla',
+  ]
 
   let selectedTroop = null
   let selectedCounty = null
@@ -63,7 +65,7 @@ const strategy = () => {
   // TODO: Separar el resto de funcionalidades en algún momento.
   const generateMap = (rows, cols) => {
     // 5 rows 5 cols
-    for (let i = 0; i < rows*cols; i++) {
+    for (let i = 0; i < rows * cols; i++) {
       const container = map.appendChild(document.createElement('div'))
       container.classList.add('county')
       const county = chooseAndRemoveCounty(counties)
@@ -77,7 +79,7 @@ const strategy = () => {
 
   const handleActions = (event) => {
     const county = event.target
-    if(isCounty(county)) {
+    if (isCounty(county)) {
       selectCounty(county)
       onClickShowName(county)
 
@@ -87,7 +89,7 @@ const strategy = () => {
   }
 
   const onClickShowName = (county) => {
-    if(isCounty(county)) {
+    if (isCounty(county)) {
       const countyTitle = county.title
       document.getElementById('properties').style.visibility = 'visible'
       document.getElementsByClassName('county_name')[0].innerHTML = countyTitle
@@ -95,7 +97,7 @@ const strategy = () => {
   }
 
   const selectCounty = (county) => {
-    if(isCounty(county)) {
+    if (isCounty(county)) {
       selectedCounty = county
       console.log(`${selectedCounty.getAttribute('title')} selected`)
     }
@@ -104,7 +106,7 @@ const strategy = () => {
   }
 
   const spawnTroops = (event) => {
-    if(event.target.tagName !== 'BUTTON') return
+    if (event.target.tagName !== 'BUTTON') return
 
     countyName = selectedCounty.getAttribute('title')
     console.log(`${countyName} selected`)
@@ -112,57 +114,64 @@ const strategy = () => {
     const stack = selectedCounty.appendChild(document.createElement('div'))
     stack.classList.add('troop')
 
-    if(event.target.classList.contains('infantry')) {
+    if (event.target.classList.contains('infantry')) {
       stack.classList.add('infantry')
     } else {
       stack.classList.add('tank')
     }
+
+    if (hasEnemies(selectedCounty)) {
+      console.log('Enemy')
+    }
   }
 
-  const selectTroop = (event) => {
+  const selectTroop = async (event) => {
     const element = event.target
 
-    if(isTroop(element)) {
-      if(selectedTroop && isCounty(element)) {
-        moveTroop(selectedTroop, element)
+    if (isTroop(element)) {
+      if (selectedTroop && isCounty(element)) {
+        console.log(`Moving to ${element.title}`)
+        await moveTroop(selectedTroop, element)
         selectedTroop = null
       } else {
         console.log('Troop selected')
         selectedTroop = element
       }
     } else {
-      if(selectedTroop && isCounty(element)) {
-        moveTroop(selectedTroop, element)
+      if (selectedTroop && isCounty(element)) {
+        console.log(`Moving to ${element.title}`)
+        await moveTroop(selectedTroop, element)
         selectedTroop = null
       }
-
-      if(isCounty(event.target)) console.log('There\'s no troops here.')
     }
   }
 
   const moveTroop = (troop, county) => {
-    // Clonamos la tropa en la provincia seleccionada
-    const troopClone = county.appendChild(troop.cloneNode(true))
-    // Ocultamos la tropa clonada momentaneamente
-    troopClone.style.visibility = 'hidden'
+    return new Promise((resolve) => {
+      const troopClone = county.appendChild(troop.cloneNode(true))
+      troopClone.style.visibility = 'hidden'
 
-    const targetRect = county.getBoundingClientRect()
-    const troopRect = troop.getBoundingClientRect()
+      const targetRect = county.getBoundingClientRect()
+      const troopRect = troop.getBoundingClientRect()
 
-    const offsetX = targetRect.left + targetRect.width / 2 - (troopRect.left + troopRect.width / 2)
-    const offsetY = targetRect.top + targetRect.height / 2 - (troopRect.top + troopRect.height / 2)
+      const offsetX = targetRect.left + targetRect.width / 2 - (troopRect.left + troopRect.width / 2)
+      const offsetY = targetRect.top + targetRect.height / 2 - (troopRect.top + troopRect.height / 2)
 
-    troop.style.transition = 'transform 5s ease-in-out'
-    troop.style.transform = `translate(${offsetX}px, ${offsetY}px)`
+      troop.style.transition = 'transform 5s ease-in-out'
+      troop.style.transform = `translate(${offsetX}px, ${offsetY}px)`
 
-    //* Hacemos visible la tropa clonada en el nuevo condado
-    //* una vez termine la transición que simula el movimiento.
-    setTimeout(() => {
-      // Hacemos la tropa clonada visible
-      troopClone.style.visibility = 'visible'
-      // Eliminamos la tropa original
-      troop.remove()
-    }, 5000);
+      // Esperar a que termine la transición antes de resolver la promesa
+      troop.addEventListener('transitionend', function handler() {
+        troopClone.style.visibility = 'visible'
+        troop.remove()
+        troop.removeEventListener('transitionend', handler)
+
+        if (hasEnemies(selectedCounty)) {
+          console.log('Enemy')
+        }
+        resolve() // Resolvemos la promesa después de que la transición haya terminado
+      })
+    })
   }
 
   document.addEventListener('click', handleActions)
@@ -174,4 +183,4 @@ const strategy = () => {
 
 const game = strategy()
 
-game.generateMap(5,5)
+game.generateMap(5, 5)
