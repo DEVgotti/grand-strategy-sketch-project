@@ -72,7 +72,6 @@ const strategy = () => {
       const container = map.appendChild(document.createElement('div'))
       container.classList.add('county')
       const county = chooseAndRemoveCounty(counties)
-      container.setAttribute('data-county', county)
       container.setAttribute('title', county)
       container.addEventListener('click', onClickShowName)
 
