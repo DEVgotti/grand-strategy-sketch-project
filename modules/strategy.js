@@ -13,7 +13,7 @@ export const createStrategyGame = () => {
     const eventsModule = createEventsModule(mapModule, troopsModule, armyModule, combatModule)
 
     // Add global event listener
-    document.addEventListener('click', eventsModule.handleActions)
+    document.addEventListener('click', eventsModule.handleClick)
 
     return {
         generateMap: mapModule.generateMap

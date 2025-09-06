@@ -1,43 +1,41 @@
 export const createEventsModule = (mapModule, troopsModule, armyModule, combatModule) => {
-    let spawnTroopsHandler = null
-    let selectTroopHandler = null
+    const handleClick = (event) => {
+        const target = event.target
 
-    const handleActions = (event) => {
-        const county = event.target
-        if (mapModule.isCounty(county)) {
-            mapModule.selectCounty(county)
-            mapModule.onClickShowName(county)
+        // Click on a county
+        if (mapModule.isCounty(target)) {
+            mapModule.selectCounty(target)
+            mapModule.onClickShowName(target)
 
-            // Remove any existing event listeners to prevent duplicates
-            if (spawnTroopsHandler) {
-                document.removeEventListener('click', spawnTroopsHandler)
+            // If a troop is selected and we click a county, attempt move
+            const selectedCounty = mapModule.getSelectedCounty()
+            if (troopsModule.getSelectedTroop()) {
+                // Reuse existing logic in troops module
+                troopsModule.selectTroop(event, selectedCounty)
             }
-            if (selectTroopHandler) {
-                document.removeEventListener('click', selectTroopHandler)
-            }
+            return
+        }
 
-            // Define new event handlers with current context
-            spawnTroopsHandler = (e) => {
-                const selectedCounty = mapModule.getSelectedCounty()
-                if (selectedCounty) {
-                    troopsModule.spawnTroops(e, selectedCounty, armyModule)
-                }
+        // Click on spawn buttons
+        if (target.tagName === 'BUTTON') {
+            const selectedCounty = mapModule.getSelectedCounty()
+            if (selectedCounty) {
+                troopsModule.spawnTroops(event, selectedCounty, armyModule)
             }
+            return
+        }
 
-            selectTroopHandler = (e) => {
-                const selectedCounty = mapModule.getSelectedCounty()
-                if (selectedCounty) {
-                    troopsModule.selectTroop(e, selectedCounty)
-                }
+        // Click on a troop
+        if (troopsModule.isTroop(target)) {
+            const selectedCounty = mapModule.getSelectedCounty()
+            if (selectedCounty) {
+                troopsModule.selectTroop(event, selectedCounty)
             }
-
-            // Add new event listeners
-            document.addEventListener('click', spawnTroopsHandler)
-            document.addEventListener('click', selectTroopHandler)
+            return
         }
     }
 
     return {
-        handleActions
+        handleClick,
     }
 }
