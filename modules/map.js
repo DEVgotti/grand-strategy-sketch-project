@@ -80,6 +80,7 @@ export const createMapModule = () => {
             const county_terrain = container.appendChild(document.createElement('div'))
             county_terrain.classList.add('county')
             county_terrain.dataset.owner = 'neutral'
+            county_terrain.dataset.lastOwner = 'neutral'
             county_terrain.classList.add('owner-neutral')
 
             // Coordenadas para futuras reglas de movimiento

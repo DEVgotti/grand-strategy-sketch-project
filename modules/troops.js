@@ -230,29 +230,124 @@ export const createTroopsModule = (mapModule, combatModule) => {
         selectedTroop = troop
     }
 
-    // Actualiza owner del county según presencia de bandos
+    // Auto-spawn utilitario (usado por Buildings). No depende de event ni de botones.
+    // type: 'infantry' | 'tank'
+    // side: 'ally' | 'enemy' (por defecto ally)
+    const spawnByType = (type, countyEl, armyModule, side = 'ally') => {
+        if (!countyEl || (type !== 'infantry' && type !== 'tank')) return null
+
+        // Buscar stack existente (mismo tipo + bando)
+        const stacks = Array.from(countyEl.querySelectorAll('.troop'))
+        const match = stacks.find(el => (el.dataset?.type === type) && (el.dataset?.side === side))
+
+        // Helpers locales para badge y conteo
+        const ensureBadge = (el) => {
+            let badge = el.querySelector('.badge')
+            if (!badge) {
+                badge = document.createElement('span')
+                badge.classList.add('badge')
+                el.appendChild(badge)
+            }
+            return badge
+        }
+        const setCount = (el, n) => {
+            el.dataset.count = String(n)
+            const badge = ensureBadge(el)
+            badge.textContent = String(n)
+            const t = el.dataset?.type || '?'
+            const s = el.dataset?.side || '?'
+            el.title = `${t} (${s}) x${n}`
+        }
+
+        let troopEl = match || null
+        if (match) {
+            const next = Number(match.dataset.count || '1') + 1
+            setCount(match, next)
+            troopEl = match
+        } else {
+            troopEl = document.createElement('div')
+            troopEl.classList.add('troop', type, side)
+            troopEl.setAttribute('data-id', generateRandomId())
+            troopEl.dataset.type = type
+            troopEl.dataset.side = side
+            setCount(troopEl, 1)
+            countyEl.appendChild(troopEl)
+        }
+
+        // Actualizar Army solo si es aliado
+        if (side === 'ally') {
+            if (type === 'infantry') {
+                armyModule?.addInfantry && armyModule.addInfantry()
+            } else {
+                armyModule?.addTank && armyModule.addTank()
+            }
+        }
+
+        // Emitir evento de spawn con metadatos
+        {
+            const troopId = troopEl.getAttribute('data-id') || null
+            const count = Number(troopEl.dataset?.count || '1')
+            bus.emit('troops.spawned', { type, side, countyEl, troopId, count })
+        }
+
+        // Si hay bandos distintos en el county, resolver combate
+        const sidesInCounty = new Set(Array.from(countyEl.querySelectorAll('.troop')).map(t => t.dataset.side))
+        if (sidesInCounty.size > 1 && combatModule.hasEnemies(countyEl)) {
+            combatModule.fight(combatModule.getEnemies(countyEl))
+        } else {
+            // Si no hay disputa, actualizar owner (ally/enemy/neutral)
+            if (typeof updateOwnerForCounty === 'function') updateOwnerForCounty(countyEl)
+        }
+
+        return troopEl
+    }
+
+    // Actualiza owner del county según presencia de bandos (sticky sin tropas)
     const updateOwnerForCounty = (county) => {
         if (!county) return
         const troops = Array.from(county.querySelectorAll('.troop'))
         const sides = new Set(troops.map(t => t.dataset?.side))
-        let owner = 'neutral'
-        if (sides.has('ally') && sides.has('enemy')) owner = 'contested'
-        else if (sides.has('ally')) owner = 'ally'
-        else if (sides.has('enemy')) owner = 'enemy'
-        else owner = 'neutral'
-        if (typeof mapModule.setOwner === 'function') {
-            mapModule.setOwner(county, owner)
+
+        const prevOwner = county.dataset.owner || 'neutral'
+        const lastOwner = county.dataset.lastOwner || prevOwner
+
+        let newOwner = prevOwner
+        let newLastOwner = county.dataset.lastOwner || lastOwner
+
+        if (sides.has('ally') && sides.has('enemy')) {
+            newOwner = 'contested'
+            // No cambiamos lastOwner en disputa
+        } else if (sides.has('ally')) {
+            newOwner = 'ally'
+            newLastOwner = 'ally'
+        } else if (sides.has('enemy')) {
+            newOwner = 'enemy'
+            newLastOwner = 'enemy'
         } else {
-            county.dataset.owner = owner
-            county.classList.remove('owner-ally', 'owner-enemy', 'owner-contested', 'owner-neutral')
-            county.classList.add(`owner-${owner}`)
+            // Sin tropas: mantener el último dueño conocido (sticky)
+            newOwner = lastOwner
         }
-        bus.emit('map.owner_changed', { countyEl: county, owner })
+
+        // Persistir lastOwner siempre
+        county.dataset.lastOwner = newLastOwner
+
+        // Aplicar solo si realmente cambia el owner visible
+        if (newOwner !== prevOwner) {
+            if (typeof mapModule.setOwner === 'function') {
+                mapModule.setOwner(county, newOwner)
+            } else {
+                county.dataset.owner = newOwner
+                county.classList.remove('owner-ally', 'owner-enemy', 'owner-contested', 'owner-neutral')
+                county.classList.add(`owner-${newOwner}`)
+            }
+            bus.emit('map.owner_changed', { countyEl: county, owner: newOwner })
+        }
     }
 
     return {
         isTroop,
         spawnTroops,
+        spawnByType,
         selectTroop,
         moveTroop,
         getSelectedTroop,
