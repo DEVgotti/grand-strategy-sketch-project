@@ -81,8 +81,12 @@ export const createTroopsModule = (mapModule, combatModule) => {
             bus.emit('troops.spawned', { type, side, countyEl: selectedCounty, troopId, count })
         }
 
-        // Evaluar combate solo si hay bandos distintos presentes
+        // Evaluar control de territorio (si no hay dos bandos, asignar owner)
         const sidesInCounty = new Set(Array.from(selectedCounty.querySelectorAll('.troop')).map(t => t.dataset.side))
+        if (sidesInCounty.size !== 2) {
+            updateOwnerForCounty(selectedCounty)
+        }
+        // Evaluar combate solo si hay bandos distintos presentes
         if (sidesInCounty.size > 1 && combatModule.hasEnemies(selectedCounty)) {
             console.log('[combat] Enemy presence detected')
             combatModule.fight(combatModule.getEnemies(selectedCounty))
@@ -126,11 +130,15 @@ export const createTroopsModule = (mapModule, combatModule) => {
                 bus.emit('troops.move_started', { troopEl: selectedTroop, fromCountyEl, toCountyEl: destinationCounty })
                 await moveTroop(selectedTroop, destinationCounty)
                 bus.emit('troops.moved', { toCountyEl: destinationCounty })
-                // Tras mover, evaluar combate en el destino
+                // Tras mover, evaluar combate en el destino o asignar owner si no hay enemigos
                 if (combatModule.hasEnemies(destinationCounty)) {
                     console.log('Enemy')
                     combatModule.fight(combatModule.getEnemies(destinationCounty))
+                } else {
+                    updateOwnerForCounty(destinationCounty)
                 }
+                // Re-evaluar control del county de origen (puede quedar neutral)
+                updateOwnerForCounty(fromCountyEl)
             } else {
                 console.warn('No hay ruta disponible hacia el destino')
             }
@@ -222,12 +230,33 @@ export const createTroopsModule = (mapModule, combatModule) => {
         selectedTroop = troop
     }
 
+    // Actualiza owner del county según presencia de bandos
+    const updateOwnerForCounty = (county) => {
+        if (!county) return
+        const troops = Array.from(county.querySelectorAll('.troop'))
+        const sides = new Set(troops.map(t => t.dataset?.side))
+        let owner = 'neutral'
+        if (sides.has('ally') && sides.has('enemy')) owner = 'contested'
+        else if (sides.has('ally')) owner = 'ally'
+        else if (sides.has('enemy')) owner = 'enemy'
+        else owner = 'neutral'
+        if (typeof mapModule.setOwner === 'function') {
+            mapModule.setOwner(county, owner)
+        } else {
+            county.dataset.owner = owner
+            county.classList.remove('owner-ally', 'owner-enemy', 'owner-contested', 'owner-neutral')
+            county.classList.add(`owner-${owner}`)
+        }
+        bus.emit('map.owner_changed', { countyEl: county, owner })
+    }
+
     return {
         isTroop,
         spawnTroops,
         selectTroop,
         moveTroop,
         getSelectedTroop,
-        setSelectedTroop
+        setSelectedTroop,
+        updateOwnerForCounty
     }
 }

@@ -79,6 +79,8 @@ export const createMapModule = () => {
 
             const county_terrain = container.appendChild(document.createElement('div'))
             county_terrain.classList.add('county')
+            county_terrain.dataset.owner = 'neutral'
+            county_terrain.classList.add('owner-neutral')
 
             // Coordenadas para futuras reglas de movimiento
             const x = i % cols
@@ -119,11 +121,19 @@ export const createMapModule = () => {
         }
     }
 
+    const setOwner = (county, owner) => {
+        if (!isCounty(county)) return
+        county.dataset.owner = owner
+        county.classList.remove('owner-ally', 'owner-enemy', 'owner-contested', 'owner-neutral')
+        county.classList.add(`owner-${owner}`)
+    }
+
     return {
         generateMap,
         isCounty,
         selectCounty,
         onClickShowName,
-        getSelectedCounty: () => selectedCounty
+        getSelectedCounty: () => selectedCounty,
+        setOwner,
     }
 }

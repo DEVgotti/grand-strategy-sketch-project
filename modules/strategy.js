@@ -5,6 +5,7 @@ import { createArmyModule } from './army.js'
 import { createEventsModule } from './events.js'
 import { loadArmy } from './persistence.js'
 import { createHudModule } from './hud.js'
+import { createGameLoop } from './loop.js'
 
 export const createStrategyGame = () => {
     // Create all modules
@@ -14,6 +15,7 @@ export const createStrategyGame = () => {
     const troopsModule = createTroopsModule(mapModule, combatModule)
     const eventsModule = createEventsModule(mapModule, troopsModule, armyModule, combatModule)
     const hudModule = createHudModule(armyModule)
+    const loop = createGameLoop({ intervalMs: 1000 })
 
     // Load persisted state (army) before wiring events
     loadArmy().then((saved) => {
@@ -27,8 +29,13 @@ export const createStrategyGame = () => {
     // Init event delegation within app container
     eventsModule.init()
     hudModule.init()
+    loop.start()
 
     return {
-        generateMap: mapModule.generateMap
+        generateMap: mapModule.generateMap,
+        startLoop: loop.start,
+        stopLoop: loop.stop,
+        getTick: loop.getTick,
+        setLoopInterval: loop.setIntervalMs,
     }
 }

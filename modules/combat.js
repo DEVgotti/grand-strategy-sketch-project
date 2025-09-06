@@ -120,6 +120,21 @@ export const createCombatModule = () => {
         applyFor('ally', 'tank', totals.ally.tank)
         applyFor('enemy', 'infantry', totals.enemy.infantry)
         applyFor('enemy', 'tank', totals.enemy.tank)
+
+        // Determinar owner del county tras aplicar bajas
+        const allyTotal = Math.max(0, (totals.ally.infantry || 0)) + Math.max(0, (totals.ally.tank || 0))
+        const enemyTotal = Math.max(0, (totals.enemy.infantry || 0)) + Math.max(0, (totals.enemy.tank || 0))
+        let owner = 'neutral'
+        if (allyTotal > 0 && enemyTotal > 0) owner = 'contested'
+        else if (allyTotal > 0) owner = 'ally'
+        else if (enemyTotal > 0) owner = 'enemy'
+        else owner = 'neutral'
+
+        // Actualizar DOM (dataset y clases) y emitir evento
+        county.dataset.owner = owner
+        county.classList.remove('owner-ally', 'owner-enemy', 'owner-contested', 'owner-neutral')
+        county.classList.add(`owner-${owner}`)
+        bus.emit('map.owner_changed', { countyEl: county, owner })
     }
 
     const mergeTroops = () => { /* reservado para lógica futura si es necesaria */ }
