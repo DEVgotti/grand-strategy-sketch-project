@@ -17,6 +17,22 @@
       <div class="enemy_mode">
         <label><input type="checkbox" id="enemyMode" /> Enemy mode</label>
       </div>
+      <div id="hud">
+        <h2>HUD</h2>
+        <div class="hud_rows">
+          <div class="hud_col">
+            <h3>Ally</h3>
+            <div class="stat"><span>Infantry:</span> <strong id="hud_ally_infantry">0</strong></div>
+            <div class="stat"><span>Tank:</span> <strong id="hud_ally_tank">0</strong></div>
+            <button id="btnResetArmy" title="Reset persistent allied army">Reset Army</button>
+          </div>
+          <div class="hud_col">
+            <h3>Enemy</h3>
+            <div class="stat"><span>Infantry:</span> <strong id="hud_enemy_infantry">0</strong></div>
+            <div class="stat"><span>Tank:</span> <strong id="hud_enemy_tank">0</strong></div>
+          </div>
+        </div>
+      </div>
       <div class="troop_movilization">
         <button class="infantry">Infantry</button>
         <button class="tank">Tank</button>

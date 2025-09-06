@@ -1,6 +1,6 @@
 import { generateRandomId } from '../helpers/generateId.js'
 import bus from './bus.js'
-import { buildGridFromDOM, isReachable } from './pathfinding.js'
+import { buildGridFromDOM, isReachable, findPath } from './pathfinding.js'
 
 export const createTroopsModule = (mapModule, combatModule) => {
     let selectedTroop = null
@@ -92,12 +92,16 @@ export const createTroopsModule = (mapModule, combatModule) => {
     const selectTroop = async (event, _selectedCounty) => {
         const element = event.target
 
-        // Si se hace click sobre una tropa: seleccionarla
+        // Si se hace click sobre una tropa: seleccionarla (resaltado)
         if (isTroop(element)) {
             const id = element.getAttribute('data-id') || '(no-id)'
             const moving = element?.dataset?.moving === 'true'
             console.debug(`[troops] troop.selected id=${id} moving=${moving}`)
+            if (selectedTroop && selectedTroop !== element) {
+                selectedTroop.classList.remove('selected')
+            }
             selectedTroop = element
+            selectedTroop.classList.add('selected')
             bus.emit('troops.selected', { troopEl: element })
             return
         }
@@ -134,35 +138,81 @@ export const createTroopsModule = (mapModule, combatModule) => {
         }
     }
 
-    const moveTroop = (troop, county) => {
-        return new Promise((resolve) => {
-            const troopClone = county.appendChild(troop.cloneNode(true))
-            troopClone.style.visibility = 'hidden'
-
+    const moveTroop = (troop, destinationCounty) => {
+        return new Promise(async (resolve) => {
             const troopId = troop.getAttribute('data-id') || '(no-id)'
             troop.dataset.moving = 'true'
-            console.debug(`[troops] moveTroop.start id=${troopId} to=${county.title}`)
+            console.debug(`[troops] moveTroop.path id=${troopId} to=${destinationCounty.title}`)
 
-            const targetRect = county.getBoundingClientRect()
-            const troopRect = troop.getBoundingClientRect()
+            // Construir ruta paso a paso
+            const { grid } = buildGridFromDOM()
+            const fromCountyEl = troop.closest ? (troop.closest('.county') || troop.parentElement) : troop.parentElement
 
-            const offsetX = targetRect.left + targetRect.width / 2 - (troopRect.left + troopRect.width / 2)
-            const offsetY = targetRect.top + targetRect.height / 2 - (troopRect.top + troopRect.height / 2)
+            const coords = findPath(fromCountyEl, destinationCounty, grid)
+            const countyFor = (x, y) => document.querySelector(`.county[data-x="${x}"][data-y="${y}"]`)
+            const steps = Array.isArray(coords) ? coords.slice(1).map(([x, y]) => countyFor(x, y)).filter(Boolean) : []
 
-            troop.style.transition = 'transform 5s ease-in-out'
-            troop.style.transform = `translate(${offsetX}px, ${offsetY}px)`
+            // Si no hay pasos (o ruta vacía), usar desplazamiento directo corto
+            if (steps.length === 0) {
+                const clone = destinationCounty.appendChild(troop.cloneNode(true))
+                clone.style.visibility = 'hidden'
 
-            // Esperar a que termine la transición antes de resolver la promesa
-            troop.addEventListener('transitionend', function handler() {
-                const troopId = troop.getAttribute('data-id') || '(no-id)'
-                troopClone.style.visibility = 'visible'
-                troop.dataset.moving = 'false'
-                console.debug(`[troops] moveTroop.end id=${troopId}`)
-                troop.remove()
-                troop.removeEventListener('transitionend', handler)
+                const targetRect = destinationCounty.getBoundingClientRect()
+                const troopRect = troop.getBoundingClientRect()
 
-                resolve() // Resolvemos la promesa después de que la transición haya terminado
+                const offsetX = targetRect.left + targetRect.width / 2 - (troopRect.left + troopRect.width / 2)
+                const offsetY = targetRect.top + targetRect.height / 2 - (troopRect.top + troopRect.height / 2)
+
+                troop.style.transition = 'transform 0.5s ease-in-out'
+                troop.style.transform = `translate(${offsetX}px, ${offsetY}px)`
+
+                troop.addEventListener('transitionend', function handler() {
+                    clone.style.visibility = 'visible'
+                    troop.dataset.moving = 'false'
+                    console.debug(`[troops] moveTroop.end id=${troopId}`)
+                    troop.remove()
+                    troop.removeEventListener('transitionend', handler)
+                    resolve()
+                })
+                return
+            }
+
+            // Animación nodo a nodo
+            let currentEl = troop
+            const stepDurationMs = 350
+
+            const animateStep = (fromEl, toCounty) => new Promise((res) => {
+                const clone = toCounty.appendChild(fromEl.cloneNode(true))
+                clone.style.visibility = 'hidden'
+                // Mantener resaltado si lo hubiera
+                if (fromEl.classList.contains('selected')) clone.classList.add('selected')
+
+                const sourceRect = fromEl.getBoundingClientRect()
+                const targetRect = toCounty.getBoundingClientRect()
+
+                const offsetX = targetRect.left + targetRect.width / 2 - (sourceRect.left + sourceRect.width / 2)
+                const offsetY = targetRect.top + targetRect.height / 2 - (sourceRect.top + sourceRect.height / 2)
+
+                fromEl.style.transition = `transform ${stepDurationMs}ms ease-in-out`
+                fromEl.style.transform = `translate(${offsetX}px, ${offsetY}px)`
+
+                fromEl.addEventListener('transitionend', function handler() {
+                    clone.style.visibility = 'visible'
+                    clone.dataset.moving = 'true' // seguimos en movimiento
+                    fromEl.removeEventListener('transitionend', handler)
+                    fromEl.remove()
+                    res(clone)
+                })
             })
+
+            for (const nextCounty of steps) {
+                // eslint-disable-next-line no-await-in-loop
+                currentEl = await animateStep(currentEl, nextCounty)
+            }
+
+            currentEl.dataset.moving = 'false'
+            console.debug(`[troops] moveTroop.end id=${troopId}`)
+            resolve()
         })
     }
 

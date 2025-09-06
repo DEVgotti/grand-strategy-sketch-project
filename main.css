@@ -126,3 +126,91 @@ body {
   text-align: center;
   pointer-events: none;
 }
+
+/* Selección visual de county y tropas */
+.county.selected {
+  outline: 3px solid #ffd54f;
+  box-shadow: 0 0 10px 2px rgba(255, 213, 79, 0.6) inset;
+}
+
+.county .troop.selected {
+  box-shadow: 0 0 6px 2px rgba(255, 255, 255, 0.8);
+}
+
+/* Elevar en z las tropas mientras se mueven */
+.county .troop[data-moving="true"] {
+  z-index: 5;
+}
+
+/* HUD styles */
+#properties #hud {
+  margin: 10px;
+  padding: 10px;
+  background: #363b5a;
+  border: 1px solid #2a2f4a;
+  border-radius: 6px;
+}
+
+#properties #hud h2 {
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+}
+
+#properties #hud .hud_rows {
+  display: flex;
+  gap: 12px;
+}
+
+#properties #hud .hud_col {
+  flex: 1 1 0;
+  background: #2d3250;
+  border: 1px solid #1f2340;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+#properties #hud .stat {
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 0;
+}
+
+#properties #hud #btnResetArmy {
+  margin-top: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  background: #8b3f3f;
+  color: #fff;
+  border: 1px solid #6e2b2b;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#properties #hud #btnResetArmy:hover {
+  background: #9a4646;
+}
+
+/* UX: spawn buttons disabled look */
+#properties .troop_movilization button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* UX: cursores y hover en counties y tropas */
+.county {
+  cursor: pointer;
+}
+
+.county:hover {
+  outline: 2px solid rgba(255, 255, 255, 0.25);
+}
+
+.county .troop {
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+
+.county .troop:hover {
+  transform: scale(1.1);
+  z-index: 6;
+}

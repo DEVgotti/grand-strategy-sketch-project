@@ -99,7 +99,12 @@ export const createMapModule = () => {
 
     const selectCounty = (county) => {
         if (isCounty(county)) {
+            // Quitar resaltado previo si cambia la selección
+            if (selectedCounty && selectedCounty !== county) {
+                selectedCounty.classList.remove('selected')
+            }
             selectedCounty = county
+            selectedCounty.classList.add('selected')
             console.log(`${selectedCounty.getAttribute('title')} selected`)
         }
 

@@ -8,6 +8,12 @@ export const createEventsModule = (mapModule, troopsModule, armyModule, combatMo
             mapModule.selectCounty(target)
             mapModule.onClickShowName(target)
 
+            // Habilitar botones de despliegue cuando hay county seleccionado
+            const infBtn = document.querySelector('#properties .troop_movilization .infantry')
+            const tankBtn = document.querySelector('#properties .troop_movilization .tank')
+            if (infBtn) infBtn.disabled = false
+            if (tankBtn) tankBtn.disabled = false
+
             // Emit selection event
             const x = Number(target.dataset.x)
             const y = Number(target.dataset.y)
@@ -53,6 +59,12 @@ export const createEventsModule = (mapModule, troopsModule, armyModule, combatMo
         const app = document.querySelector('.app')
         if (!app) return
         app.addEventListener('click', handleClick)
+
+        // Deshabilitar inicialmente los botones de despliegue hasta que se seleccione un county
+        const infBtn = document.querySelector('#properties .troop_movilization .infantry')
+        const tankBtn = document.querySelector('#properties .troop_movilization .tank')
+        if (infBtn) infBtn.disabled = true
+        if (tankBtn) tankBtn.disabled = true
     }
 
     return {
