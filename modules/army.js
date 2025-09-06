@@ -1,3 +1,4 @@
+import { saveArmy } from './persistence.js'
 export const createArmyModule = () => {
     let army = {
         infantry: {
@@ -16,6 +17,8 @@ export const createArmyModule = () => {
             },
         }
         console.log(army)
+        // Persistir en segundo plano
+        saveArmy(army).catch(console.error)
     }
 
     const addTank = () => {
@@ -26,13 +29,22 @@ export const createArmyModule = () => {
             },
         }
         console.log(army)
+        // Persistir en segundo plano
+        saveArmy(army).catch(console.error)
     }
 
     const getArmy = () => army
 
+    const setArmy = (next) => {
+        if (!next) return
+        army = next
+        console.log('Army loaded', army)
+    }
+
     return {
         addInfantry,
         addTank,
-        getArmy
+        getArmy,
+        setArmy
     }
 }
