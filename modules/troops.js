@@ -11,46 +11,80 @@ export const createTroopsModule = (mapModule, combatModule) => {
         const btn = event.target?.closest('button') || null
         if (!btn || !selectedCounty) return
 
-        const spawnType = btn
-        const countyName = selectedCounty.getAttribute('title')
-        console.log(`${countyName} selected`)
+        // Determinar tipo a desplegar
+        const type = btn.classList.contains('infantry')
+            ? 'infantry'
+            : (btn.classList.contains('tank') ? 'tank' : null)
+        if (!type) return
 
-        // Check if county already has troops
-        const hasTroops = selectedCounty.querySelectorAll('.troop').length > 0
+        // Enemy mode -> side "enemy", por defecto "ally"
+        const enemyMode = !!document.getElementById('enemyMode')?.checked
+        const side = enemyMode ? 'enemy' : 'ally'
 
-        if (!hasTroops) {
-            const stack = selectedCounty.appendChild(document.createElement('div'))
-            stack.classList.add('troop')
-            const troopId = generateRandomId()
-            stack.setAttribute('data-id', troopId)
+        const countyName = selectedCounty.getAttribute('title') || '(unknown)'
+        console.debug(`[troops] spawn.request county=${countyName} type=${type} side=${side}`)
+
+        // Buscar un stack existente en el county con mismo tipo y bando
+        const stacks = Array.from(selectedCounty.querySelectorAll('.troop'))
+        const match = stacks.find(el => (el.dataset?.type === type) && (el.dataset?.side === side))
+
+        // Helpers para badge de cantidad
+        const ensureBadge = (el) => {
+            let badge = el.querySelector('.badge')
+            if (!badge) {
+                badge = document.createElement('span')
+                badge.classList.add('badge')
+                el.appendChild(badge)
+            }
+            return badge
+        }
+        const setCount = (el, n) => {
+            el.dataset.count = String(n)
+            const badge = ensureBadge(el)
+            badge.textContent = String(n)
+            // Tooltip informativo
+            const t = el.dataset?.type || '?'
+            const s = el.dataset?.side || '?'
+            el.title = `${t} (${s}) x${n}`
         }
 
-        // Update army count
-        if (spawnType.classList.contains('infantry')) {
-            // Only add class if we just created a new troop
-            if (!hasTroops) {
-                selectedCounty.getElementsByClassName('troop')[0].classList.add('infantry')
-            }
-            armyModule.addInfantry()
+        let troopEl = match || null
+
+        if (match) {
+            // Incrementar el conteo del stack existente
+            const next = Number(match.dataset.count || '1') + 1
+            setCount(match, next)
         } else {
-            // Only add class if we just created a new troop
-            if (!hasTroops) {
-                selectedCounty.getElementsByClassName('troop')[0].classList.add('tank')
+            // Crear nuevo stack
+            troopEl = document.createElement('div')
+            troopEl.classList.add('troop', type, side)
+            troopEl.setAttribute('data-id', generateRandomId())
+            troopEl.dataset.type = type
+            troopEl.dataset.side = side
+            setCount(troopEl, 1)
+            selectedCounty.appendChild(troopEl)
+        }
+
+        // Actualizar ejército solo para el bando aliado
+        if (side === 'ally') {
+            if (type === 'infantry') {
+                armyModule.addInfantry()
+            } else {
+                armyModule.addTank()
             }
-            armyModule.addTank()
         }
 
-        // Emit spawned event
+        // Emitir evento de spawn con metadatos
         {
-            const troopEl = selectedCounty.getElementsByClassName('troop')[0]
-            const troopId = troopEl ? troopEl.getAttribute('data-id') : null
-            const type = spawnType.classList.contains('infantry') ? 'infantry' : 'tank'
-            bus.emit('troops.spawned', { type, countyEl: selectedCounty, troopId })
+            const troopId = (troopEl && troopEl.getAttribute('data-id')) || null
+            const count = Number((troopEl && troopEl.dataset?.count) || (match && match.dataset?.count) || '1')
+            bus.emit('troops.spawned', { type, side, countyEl: selectedCounty, troopId, count })
         }
 
-        // Check for enemies after spawning
-        if (combatModule.hasEnemies(selectedCounty)) {
-            console.log('Enemy')
+        // Evaluar combate solo si hay bandos distintos presentes
+        const sidesInCounty = new Set(Array.from(selectedCounty.querySelectorAll('.troop')).map(t => t.dataset.side))
+        if (sidesInCounty.size > 1 && combatModule.hasEnemies(selectedCounty)) {
+            console.log('[combat] Enemy presence detected')
             combatModule.fight(combatModule.getEnemies(selectedCounty))
         }
     }
