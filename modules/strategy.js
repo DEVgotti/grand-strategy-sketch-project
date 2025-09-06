@@ -12,8 +12,8 @@ export const createStrategyGame = () => {
     const troopsModule = createTroopsModule(mapModule, combatModule)
     const eventsModule = createEventsModule(mapModule, troopsModule, armyModule, combatModule)
 
-    // Add global event listener
-    document.addEventListener('click', eventsModule.handleClick)
+    // Init event delegation within app container
+    eventsModule.init()
 
     return {
         generateMap: mapModule.generateMap

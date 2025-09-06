@@ -17,7 +17,8 @@ export const createEventsModule = (mapModule, troopsModule, armyModule, combatMo
         }
 
         // Click on spawn buttons
-        if (target.tagName === 'BUTTON') {
+        const btn = target.closest ? target.closest('button') : null
+        if (btn) {
             const selectedCounty = mapModule.getSelectedCounty()
             if (selectedCounty) {
                 troopsModule.spawnTroops(event, selectedCounty, armyModule)
@@ -35,7 +36,14 @@ export const createEventsModule = (mapModule, troopsModule, armyModule, combatMo
         }
     }
 
+    const init = () => {
+        const app = document.querySelector('.app')
+        if (!app) return
+        app.addEventListener('click', handleClick)
+    }
+
     return {
         handleClick,
+        init,
     }
 }

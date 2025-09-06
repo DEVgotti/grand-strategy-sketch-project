@@ -6,9 +6,10 @@ export const createTroopsModule = (mapModule, combatModule) => {
     const isTroop = (troop) => troop.tagName === 'DIV' && troop.classList.contains('troop')
 
     const spawnTroops = (event, selectedCounty, armyModule) => {
-        if (event.target.tagName !== 'BUTTON') return
+        const btn = event.target?.closest('button') || null
+        if (!btn || !selectedCounty) return
 
-        const spawnType = event.target
+        const spawnType = btn
         const countyName = selectedCounty.getAttribute('title')
         console.log(`${countyName} selected`)
 
@@ -44,29 +45,30 @@ export const createTroopsModule = (mapModule, combatModule) => {
         }
     }
 
-    const selectTroop = async (event, selectedCounty) => {
+    const selectTroop = async (event, _selectedCounty) => {
         const element = event.target
 
+        // Si se hace click sobre una tropa: seleccionarla
         if (isTroop(element)) {
-            if (selectedTroop && mapModule.isCounty(element)) {
-                console.log(`Moving to ${element.title}`)
-                await moveTroop(selectedTroop, element)
-                selectedTroop = null
-            } else {
-                console.log('Troop selected')
-                selectedTroop = element
+            console.log('Troop selected')
+            selectedTroop = element
+            return
+        }
+
+        // Determinar el county de destino de forma robusta
+        const destinationCounty = mapModule.isCounty(element)
+            ? element
+            : (element.closest && element.closest('.county'))
+
+        if (selectedTroop && destinationCounty && mapModule.isCounty(destinationCounty)) {
+            console.log(`Moving to ${destinationCounty.title}`)
+            await moveTroop(selectedTroop, destinationCounty)
+            // Tras mover, evaluar combate en el destino
+            if (combatModule.hasEnemies(destinationCounty)) {
+                console.log('Enemy')
+                combatModule.fight(combatModule.getEnemies(destinationCounty))
             }
-        } else {
-            if (selectedTroop && mapModule.isCounty(element)) {
-                console.log(`Moving to ${element.title}`)
-                await moveTroop(selectedTroop, element).then(() => {
-                    if (combatModule.hasEnemies(selectedCounty)) {
-                        console.log('Enemy')
-                        combatModule.fight(combatModule.getEnemies(selectedCounty))
-                    }
-                })
-                selectedTroop = null
-            }
+            selectedTroop = null
         }
     }
 
