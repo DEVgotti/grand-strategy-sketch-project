@@ -60,7 +60,9 @@ export const createTroopsModule = (mapModule, combatModule) => {
 
         // Si se hace click sobre una tropa: seleccionarla
         if (isTroop(element)) {
-            console.log('Troop selected')
+            const id = element.getAttribute('data-id') || '(no-id)'
+            const moving = element?.dataset?.moving === 'true'
+            console.debug(`[troops] troop.selected id=${id} moving=${moving}`)
             selectedTroop = element
             bus.emit('troops.selected', { troopEl: element })
             return
@@ -72,7 +74,14 @@ export const createTroopsModule = (mapModule, combatModule) => {
             : (element.closest && element.closest('.county'))
 
         if (selectedTroop && destinationCounty && mapModule.isCounty(destinationCounty)) {
-            console.log(`Moving to ${destinationCounty.title}`)
+            const moving = selectedTroop?.dataset?.moving === 'true'
+            const id = selectedTroop.getAttribute('data-id') || '(no-id)'
+            console.debug(`[troops] move.request id=${id} moving=${moving} to=${destinationCounty.title}`)
+            // Bloquear nuevos movimientos si la tropa ya está en movimiento
+            if (moving) {
+                console.warn(`[troops] move.blocked id=${id} reason=already-moving`)
+                return
+            }
             const { grid } = buildGridFromDOM()
             const fromCountyEl = selectedTroop.closest ? (selectedTroop.closest('.county') || selectedTroop.parentElement) : selectedTroop.parentElement
             if (isReachable(fromCountyEl, destinationCounty, grid)) {
@@ -96,6 +105,10 @@ export const createTroopsModule = (mapModule, combatModule) => {
             const troopClone = county.appendChild(troop.cloneNode(true))
             troopClone.style.visibility = 'hidden'
 
+            const troopId = troop.getAttribute('data-id') || '(no-id)'
+            troop.dataset.moving = 'true'
+            console.debug(`[troops] moveTroop.start id=${troopId} to=${county.title}`)
+
             const targetRect = county.getBoundingClientRect()
             const troopRect = troop.getBoundingClientRect()
 
@@ -107,7 +120,10 @@ export const createTroopsModule = (mapModule, combatModule) => {
 
             // Esperar a que termine la transición antes de resolver la promesa
             troop.addEventListener('transitionend', function handler() {
+                const troopId = troop.getAttribute('data-id') || '(no-id)'
                 troopClone.style.visibility = 'visible'
+                troop.dataset.moving = 'false'
+                console.debug(`[troops] moveTroop.end id=${troopId}`)
                 troop.remove()
                 troop.removeEventListener('transitionend', handler)
 
