@@ -1,4 +1,6 @@
 import { generateRandomId } from '../helpers/generateId.js'
+import bus from './bus.js'
+import { buildGridFromDOM, isReachable } from './pathfinding.js'
 
 export const createTroopsModule = (mapModule, combatModule) => {
     let selectedTroop = null
@@ -38,6 +40,14 @@ export const createTroopsModule = (mapModule, combatModule) => {
             armyModule.addTank()
         }
 
+        // Emit spawned event
+        {
+            const troopEl = selectedCounty.getElementsByClassName('troop')[0]
+            const troopId = troopEl ? troopEl.getAttribute('data-id') : null
+            const type = spawnType.classList.contains('infantry') ? 'infantry' : 'tank'
+            bus.emit('troops.spawned', { type, countyEl: selectedCounty, troopId })
+        }
+
         // Check for enemies after spawning
         if (combatModule.hasEnemies(selectedCounty)) {
             console.log('Enemy')
@@ -52,6 +62,7 @@ export const createTroopsModule = (mapModule, combatModule) => {
         if (isTroop(element)) {
             console.log('Troop selected')
             selectedTroop = element
+            bus.emit('troops.selected', { troopEl: element })
             return
         }
 
@@ -62,11 +73,19 @@ export const createTroopsModule = (mapModule, combatModule) => {
 
         if (selectedTroop && destinationCounty && mapModule.isCounty(destinationCounty)) {
             console.log(`Moving to ${destinationCounty.title}`)
-            await moveTroop(selectedTroop, destinationCounty)
-            // Tras mover, evaluar combate en el destino
-            if (combatModule.hasEnemies(destinationCounty)) {
-                console.log('Enemy')
-                combatModule.fight(combatModule.getEnemies(destinationCounty))
+            const { grid } = buildGridFromDOM()
+            const fromCountyEl = selectedTroop.closest ? (selectedTroop.closest('.county') || selectedTroop.parentElement) : selectedTroop.parentElement
+            if (isReachable(fromCountyEl, destinationCounty, grid)) {
+                bus.emit('troops.move_started', { troopEl: selectedTroop, fromCountyEl, toCountyEl: destinationCounty })
+                await moveTroop(selectedTroop, destinationCounty)
+                bus.emit('troops.moved', { toCountyEl: destinationCounty })
+                // Tras mover, evaluar combate en el destino
+                if (combatModule.hasEnemies(destinationCounty)) {
+                    console.log('Enemy')
+                    combatModule.fight(combatModule.getEnemies(destinationCounty))
+                }
+            } else {
+                console.warn('No hay ruta disponible hacia el destino')
             }
             selectedTroop = null
         }
